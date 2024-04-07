@@ -7,47 +7,47 @@ class CNNBaseline(nn.Module):
         #nn.Conv2d(3, 32, )
         self.encoders_in = [3,32,64,128,256]
         self.encoders_out = [32,64,128,256,512]
-        self.conv = []
-        self.deconv = []
-        
-        for i in range(len(self.encoders_in)):
-            self.conv.append(nn.Conv2d(self.encoders_in[i], self.encoders_out[i], kernel_size=3, stride=2, padding=1, dilation=1))
-            self.conv.append(nn.BatchNorm2d(self.encoders_out[i]))
             
         self.relu = nn.ReLU(inplace=True)
-        self.pool = nn.MaxPool2d(3, stride=2)
         
         self.decoders_in = [512,256,128,64]
         self.decoders_out = [256,128,64,32]
-        
-        for i in range(len(self.decoders_in)):
-            self.deconv.append(nn.ConvTranspose2d(self.decoders_in[i], self.decoders_out[i], kernel_size=3, stride=2, padding=1, dilation=1))
-            self.deconv.append(nn.BatchNorm2d(self.decoders_out[i]))
             
-        self.classifier = nn.Conv2d(32, 5, kernel_size=1)
+        self.conv = nn.ModuleList([
+            nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2, padding=1),
+                        nn.BatchNorm2d(out_channels),
+                        nn.ReLU(inplace=True))
+            for in_channels, out_channels in zip(self.encoders_in, self.encoders_out)
+        ])
+        
+        self.deconv = nn.ModuleList([
+            nn.Sequential(nn.ConvTranspose2d(in_channels, out_channels, kernel_size=3, stride=2, padding=1, output_padding=1),
+                        nn.BatchNorm2d(out_channels),
+                        nn.ReLU(inplace=True))
+            for in_channels, out_channels in zip(self.decoders_in, self.decoders_out)
+        ])
+            
+        self.classifier = nn.Linear(32, 5)
 
 
         
         # self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1, dilation=1)
         
     def forward(self, x):
+        # Pass through encoder layers
+        for layer in self.conv:
+            x = layer(x)
         
-        for i in range(len(self.encoders_in)):
-            x = self.conv[i](x)
-                
-            if not isinstance(self.conv[i], nn.BatchNorm2d):
-                x = self.relu(x)
+        # Pass through decoder layers
+        for layer in self.deconv:
+            x = layer(x)
         
-        # x1 = self.bnd1(self.relu(self.conv1(x)))
+        # Flatten the output for the classifier
+        # x = torch.flatten(x, 1)
         
-        y = x # transition from conv to deconv
+        # Final classification layer
+        score = self.classifier(x)
         
-        for i in range(len(self.decoders_in)):
-            y = self.deconv[i](y)
-                
-            if not isinstance(self.deconv[i], nn.BatchNorm2d):
-                y = self.relu(y)
-
-        score = self.classifier(y)
+        print(score.shape)
         
         return score
