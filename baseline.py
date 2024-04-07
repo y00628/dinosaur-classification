@@ -4,7 +4,7 @@ import torch.nn as nn
 class CNNBaseline(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        nn.Conv2d(3, 32, )
+        #nn.Conv2d(3, 32, )
         self.encoders_in = [3,32,64,128,256]
         self.encoders_out = [32,64,128,256,512]
         self.conv = []
@@ -15,6 +15,7 @@ class CNNBaseline(nn.Module):
             self.conv.append(nn.BatchNorm2d(self.encoders_out[i]))
             
         self.relu = nn.ReLU(inplace=True)
+        self.pool = nn.MaxPool2d(3, stride=2)
         
         self.decoders_in = [512,256,128,64]
         self.decoders_out = [256,128,64,32]
@@ -24,6 +25,7 @@ class CNNBaseline(nn.Module):
             self.deconv.append(nn.BatchNorm2d(self.decoders_out[i]))
             
         self.classifier = nn.Conv2d(32, 5, kernel_size=1)
+
 
         
         # self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1, dilation=1)
