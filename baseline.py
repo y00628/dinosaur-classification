@@ -41,10 +41,10 @@ class CNNBaseline(nn.Module):
         y = x # transition from conv to deconv
         
         for i in range(len(self.decoders_in)):
-            x = self.deconv[i](x)
+            y = self.deconv[i](y)
                 
             if not isinstance(self.deconv[i], nn.BatchNorm2d):
-                x = self.relu(x)
+                y = self.relu(y)
 
         score = self.classifier(y)
         
